@@ -90,11 +90,13 @@ ap_sentiments %>%
 
 ### Tidying `dfm` objects
 
-Other text mining packages provide alternative implementations of document-term matrices, such as the `dfm` (document-feature matrix) class from the quanteda package [@R-quanteda]. For example, the quanteda package comes with a corpus of presidential inauguration speeches, which can be converted to a `dfm` using the appropriate function.
+Other text mining packages provide alternative implementations of document-term matrices, such as the `dfm` (document-feature matrix) class from the quanteda package [@R-quanteda]. For example, the quanteda package comes with a corpus of presidential inauguration speeches, which can be converted to a `dfm` using the appropriate functions.
 
 ```{r inaug_dfm, R.options=list(quanteda_print_dfm_max_ndoc = 0, quanteda_print_dfm_max_nfeat = 0)}
 data("data_corpus_inaugural", package = "quanteda")
-inaug_dfm <- quanteda::dfm(data_corpus_inaugural, verbose = FALSE)
+inaug_dfm <- data_corpus_inaugural %>%
+  quanteda::tokens() %>%
+  quanteda::dfm(verbose = FALSE)
 inaug_dfm
 ```
 
@@ -322,7 +324,7 @@ The top terms for each are visualized in Figure \@ref(fig:stocktfidf). As we'd e
 ```{r stocktfidf, dependson = "stocktfidfdata", echo = FALSE, fig.cap = "The 8 words with the highest tf-idf in recent articles specific to each company", fig.height = 8, fig.width = 8}
 stock_tf_idf %>%
   group_by(company) %>%
-  top_n(8, tf_idf) %>%
+  slice_max(tf_idf, n = 8) %>%
   ungroup() %>%
   mutate(word = reorder(word, tf_idf)) %>%
   ggplot(aes(word, tf_idf, fill = company)) +
@@ -409,7 +411,7 @@ Now that we know we can trust the dictionary to approximate the articles' sentim
 stock_sentiment_count <- stock_tokens %>%
   inner_join(get_sentiments("loughran"), by = "word") %>%
   count(sentiment, company) %>%
-  spread(sentiment, n, fill = 0)
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0)
 
 stock_sentiment_count
 ```
@@ -418,7 +420,7 @@ stock_sentiment_count
 stock_sentiment_count <- stock_tokens %>%
   inner_join(loughran, by = "word") %>%
   count(sentiment, company) %>%
-  spread(sentiment, n, fill = 0)
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0)
 
 stock_sentiment_count
 ```
